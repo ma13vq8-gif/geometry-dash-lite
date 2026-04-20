@@ -1,448 +1,395 @@
 // ============================================
-// GEOMETRY DASH LITE - WORKING VERSION
+// GEOMETRY DASH LITE - WORKING GAME
 // ============================================
-
-// Game State
-let gameRunning = false;
-let practiceMode = false;
-let currentLevel = 1;
-let deaths = 0;
-let attempts = 0;
-let playerStats = {
-    stars: 0,
-    diamonds: 0,
-    coins: 0,
-    completedLevels: [],
-    bestPercent: {}
-};
-
-// Game Objects
-let player = {
-    x: 100,
-    y: 500,
-    vy: 0,
-    grounded: true,
-    size: 35
-};
-let camera = 0;
-let distance = 0;
-let currentObstacles = [];
-let animationId = null;
-let frameCount = 0;
 
 // Canvas
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// Set canvas size
-canvas.width = 1000;
-canvas.height = 600;
+// Level data
+const LEVELS = {
+    1: { name: 'Stereo Madness', stars: 3, length: 1000, speed: 5, required: 0, color: '#ff3f34' },
+    2: { name: 'Back On Track', stars: 3, length: 1100, speed: 5.5, required: 3, color: '#ffa502' },
+    3: { name: 'Polargeist', stars: 4, length: 1200, speed: 6, required: 6, color: '#0fbcf9' },
+    4: { name: 'Dry Out', stars: 4, length: 1300, speed: 6.5, required: 10, color: '#05c46b' },
+    5: { name: 'Electrodynamix', stars: 5, length: 1400, speed: 7, required: 14, color: '#ff3838' }
+};
 
-// Load saved data
-function loadGameData() {
-    const saved = localStorage.getItem('geometryDashLite');
+// Player
+const player = {
+    x: 100,
+    y: canvas.height - 80,
+    width: 35,
+    height: 35,
+    dy: 0,
+    gravity: 0.6,
+    jumpPower: -10,
+    grounded: true
+};
+
+// Game state
+let gameRunning = false;
+let practiceMode = false;
+let currentLevel = 1;
+let deaths = 0;
+let attempts = 0;
+let distance = 0;
+let obstacles = [];
+let obstacleTimer = 0;
+let gameOverFlag = false;
+let winFlag = false;
+let currentSpeed = 5;
+let animationId = null;
+
+// Player stats
+let playerStats = {
+    stars: 0,
+    diamonds: 100,
+    coins: 0,
+    completed: []
+};
+
+// Load save data
+function loadGame() {
+    const saved = localStorage.getItem('gdLite');
     if (saved) {
         try {
             const data = JSON.parse(saved);
-            playerStats = data.stats || { stars: 0, diamonds: 0, coins: 0, completedLevels: [], bestPercent: {} };
+            playerStats = data.stats || { stars: 0, diamonds: 100, coins: 0, completed: [] };
             deaths = data.deaths || 0;
             attempts = data.attempts || 0;
-        } catch(e) {
-            console.error('Failed to load');
-        }
+        } catch(e) {}
     }
-    updateDisplay();
-    renderLevelButtons();
+    updateUI();
+    updateLevelButtons();
 }
 
-// Save data
-function saveGameData() {
-    localStorage.setItem('geometryDashLite', JSON.stringify({
+function saveGame() {
+    localStorage.setItem('gdLite', JSON.stringify({
         stats: playerStats,
         deaths: deaths,
         attempts: attempts
     }));
 }
 
-// Update UI displays
-function updateDisplay() {
-    document.getElementById('starCount').textContent = playerStats.stars;
-    document.getElementById('diamondCount').textContent = playerStats.diamonds;
-    document.getElementById('coinCount').textContent = playerStats.coins;
-    document.getElementById('attemptNum').textContent = attempts;
-    document.getElementById('deathNum').textContent = deaths;
+function updateUI() {
+    document.getElementById('stars').innerText = playerStats.stars;
+    document.getElementById('diamonds').innerText = playerStats.diamonds;
+    document.getElementById('coins').innerText = playerStats.coins;
+    document.getElementById('levelName').innerText = LEVELS[currentLevel].name;
 }
 
-// Render level buttons
-function renderLevelButtons() {
-    const grid = document.getElementById('levelGrid');
-    if (!grid) return;
-    grid.innerHTML = '';
-    
-    for (let i = 1; i <= 5; i++) {
-        const level = LEVELS[i];
-        const btn = document.createElement('button');
-        btn.className = 'level-btn';
-        btn.textContent = `${level.name}\n${level.difficulty} ★${level.stars}`;
-        
-        if (playerStats.completedLevels.includes(i)) {
+function updateLevelButtons() {
+    const btns = document.querySelectorAll('.level-btn');
+    btns.forEach(btn => {
+        const level = parseInt(btn.dataset.level);
+        btn.classList.remove('completed', 'locked');
+        if (playerStats.completed.includes(level)) {
             btn.classList.add('completed');
         }
-        
-        if (level.requiredStars > playerStats.stars) {
+        if (LEVELS[level].required > playerStats.stars) {
             btn.classList.add('locked');
             btn.disabled = true;
+        } else {
+            btn.disabled = false;
         }
-        
-        btn.onclick = (function(levelId) {
-            return function() { selectLevel(levelId); };
-        })(i);
-        
-        grid.appendChild(btn);
+    });
+}
+
+function selectLevel(level) {
+    if (LEVELS[level].required <= playerStats.stars) {
+        currentLevel = level;
+        updateUI();
+        document.getElementById('percentage').style.color = 'white';
     }
 }
 
-// Select level
-function selectLevel(levelId) {
-    currentLevel = levelId;
-    document.getElementById('songInfo').innerHTML = `🎵 ${LEVELS[levelId].name}`;
-}
-
-// Reset game
 function resetGame() {
-    player.y = 500;
-    player.vy = 0;
+    player.y = canvas.height - 80;
+    player.dy = 0;
     player.grounded = true;
-    camera = 0;
+    obstacles = [];
+    obstacleTimer = 0;
     distance = 0;
-    frameCount = 0;
-    
-    const level = LEVELS[currentLevel];
-    currentObstacles = [];
-    
-    // Load obstacles
-    for (let obs of level.obstacles) {
-        currentObstacles.push({
-            x: obs.x,
-            type: obs.type,
-            width: obs.type === 'double' ? 60 : (obs.type === 'block' ? 40 : 30),
-            height: obs.type === 'block' ? 40 : 30,
-            y: obs.y || 500
-        });
-    }
-    
-    document.getElementById('percentage').textContent = '0%';
-    document.getElementById('progressFill').style.width = '0%';
+    gameOverFlag = false;
+    winFlag = false;
+    currentSpeed = LEVELS[currentLevel].speed;
+    document.getElementById('percentage').innerText = '0%';
 }
 
-// Jump
+function createObstacle() {
+    const types = ['spike', 'spike', 'block'];
+    const type = types[Math.floor(Math.random() * types.length)];
+    obstacles.push({
+        x: canvas.width,
+        y: type === 'spike' ? canvas.height - 35 : canvas.height - 60,
+        width: type === 'spike' ? 25 : 40,
+        height: type === 'spike' ? 35 : 60,
+        type: type
+    });
+}
+
 function jump() {
-    if (player.grounded && gameRunning) {
-        player.vy = -10;
+    if (player.grounded && gameRunning && !gameOverFlag && !winFlag) {
+        player.dy = player.jumpPower;
         player.grounded = false;
     }
 }
 
-// Update game logic
-function updateGame() {
-    if (!gameRunning) return;
-    
-    // Physics
-    player.vy += 0.5;
-    player.y += player.vy;
-    
-    // Ground collision
-    if (player.y >= 500) {
-        player.y = 500;
-        player.vy = 0;
-        player.grounded = true;
-    }
-    
-    // Ceiling
-    if (player.y <= 50) {
-        player.y = 50;
-        player.vy = 0;
-    }
-    
-    // Scroll
-    camera += 5;
-    distance += 5;
-    
-    // Update percentage
-    const level = LEVELS[currentLevel];
-    const percent = Math.min(100, Math.floor((distance / level.length) * 100));
-    document.getElementById('percentage').textContent = `${percent}%`;
-    document.getElementById('progressFill').style.width = `${percent}%`;
-    
-    // Check win
-    if (distance >= level.length) {
-        winGame();
-        return;
-    }
-    
-    // Collision detection
-    for (let obs of currentObstacles) {
-        const obsX = obs.x - camera;
-        if (obsX > -50 && obsX < 150) {
-            if (player.x + player.size > obsX &&
-                player.x < obsX + obs.width &&
-                player.y + player.size > obs.y - obs.height) {
-                gameOver();
-                return;
-            }
-        }
-    }
-}
-
-// Game over
 function gameOver() {
+    gameOverFlag = true;
     gameRunning = false;
     deaths++;
     attempts++;
-    saveGameData();
-    updateDisplay();
+    saveGame();
+    updateUI();
     
     // Flash effect
     const flash = document.createElement('div');
     flash.className = 'death-flash';
-    document.getElementById('ui').appendChild(flash);
+    document.getElementById('gameContainer').appendChild(flash);
     setTimeout(() => flash.remove(), 200);
     
-    if (!practiceMode) {
-        document.getElementById('menuOverlay').classList.remove('hidden');
-        if (currentAudio) {
-            currentAudio.pause();
-            currentAudio = null;
-        }
-    } else {
-        resetGame();
-    }
+    document.getElementById('gameOverlay').classList.remove('hidden');
 }
 
-// Win game
 function winGame() {
+    winFlag = true;
     gameRunning = false;
-    const level = LEVELS[currentLevel];
     
-    if (!playerStats.completedLevels.includes(currentLevel)) {
-        playerStats.completedLevels.push(currentLevel);
+    const level = LEVELS[currentLevel];
+    const alreadyCompleted = playerStats.completed.includes(currentLevel);
+    
+    if (!alreadyCompleted) {
+        playerStats.completed.push(currentLevel);
         playerStats.stars += level.stars;
         playerStats.diamonds += level.stars * 10;
-        
-        document.getElementById('rewardText').innerHTML = `⭐ +${level.stars} Stars!<br>💎 +${level.stars * 10} Diamonds!`;
+        saveGame();
+        updateUI();
+        updateLevelButtons();
+        document.getElementById('rewardText').innerHTML = `+${level.stars} Stars!<br>+${level.stars * 10} Diamonds!`;
     } else {
-        document.getElementById('rewardText').innerHTML = `⭐ Level already completed!`;
+        document.getElementById('rewardText').innerHTML = `Level already completed!`;
     }
     
-    attempts++;
-    saveGameData();
-    updateDisplay();
-    renderLevelButtons();
-    
-    if (currentAudio) {
-        currentAudio.pause();
-        currentAudio = null;
-    }
-    
-    document.getElementById('completeOverlay').classList.remove('hidden');
+    document.getElementById('winOverlay').classList.remove('hidden');
 }
 
-// Start game
-function startGame(practice) {
-    practiceMode = practice;
-    gameRunning = true;
-    resetGame();
-    document.getElementById('menuOverlay').classList.add('hidden');
+function updateGame() {
+    if (!gameRunning || gameOverFlag || winFlag) return;
     
-    // Play song
-    const level = LEVELS[currentLevel];
-    const songUrl = CONFIG.SONGS[level.song];
-    if (songUrl && window.currentAudio === undefined) {
-        try {
-            window.currentAudio = new Audio(songUrl);
-            window.currentAudio.loop = true;
-            window.currentAudio.volume = 0.3;
-            window.currentAudio.play().catch(e => console.log('Audio:', e));
-        } catch(e) {}
+    // Player physics
+    player.dy += player.gravity;
+    player.y += player.dy;
+    
+    if (player.y + player.height >= canvas.height - 20) {
+        player.y = canvas.height - player.height - 20;
+        player.dy = 0;
+        player.grounded = true;
     }
-}
-
-// Draw everything
-function draw() {
-    if (!ctx) return;
     
-    // Clear
-    ctx.fillStyle = '#1a1a2e';
-    ctx.fillRect(0, 0, 1000, 600);
+    if (player.y <= 0) {
+        player.y = 0;
+        player.dy = 0;
+    }
     
-    // Draw ground
-    ctx.fillStyle = '#4a4a4a';
-    ctx.fillRect(0, 500, 1000, 5);
-    ctx.fillStyle = '#666';
-    ctx.fillRect(0, 505, 1000, 95);
+    // Distance and percentage
+    distance += currentSpeed;
+    const percent = Math.min(100, Math.floor((distance / LEVELS[currentLevel].length) * 100));
+    document.getElementById('percentage').innerText = `${percent}%`;
     
-    // Draw obstacles
-    for (let obs of currentObstacles) {
-        const x = obs.x - camera;
-        if (x > -100 && x < 1100) {
-            if (obs.type === 'spike') {
-                ctx.fillStyle = '#ff4444';
-                ctx.beginPath();
-                ctx.moveTo(x, obs.y);
-                ctx.lineTo(x + obs.width/2, obs.y - obs.height);
-                ctx.lineTo(x + obs.width, obs.y);
-                ctx.fill();
-            } else if (obs.type === 'double') {
-                ctx.fillStyle = '#ff6644';
-                ctx.fillRect(x, obs.y - obs.height, obs.width, obs.height);
-                ctx.fillStyle = '#ff8844';
-                ctx.fillRect(x + 10, obs.y - obs.height - 20, obs.width - 20, 20);
-            } else if (obs.type === 'block') {
-                ctx.fillStyle = '#8866ff';
-                ctx.fillRect(x, obs.y - obs.height, obs.width, obs.height);
-            }
+    // Win condition
+    if (distance >= LEVELS[currentLevel].length) {
+        winGame();
+        return;
+    }
+    
+    // Spawn obstacles
+    obstacleTimer++;
+    const spawnRate = Math.max(30, 70 - Math.floor(currentSpeed * 3));
+    if (obstacleTimer > spawnRate) {
+        createObstacle();
+        obstacleTimer = 0;
+    }
+    
+    // Update obstacles and collision
+    for (let i = 0; i < obstacles.length; i++) {
+        obstacles[i].x -= currentSpeed;
+        
+        // Collision detection
+        if (player.x < obstacles[i].x + obstacles[i].width &&
+            player.x + player.width > obstacles[i].x &&
+            player.y < obstacles[i].y + obstacles[i].height &&
+            player.y + player.height > obstacles[i].y) {
+            gameOver();
+            return;
         }
     }
     
-    // Draw player
-    ctx.fillStyle = '#ffd700';
-    ctx.fillRect(player.x, player.y - player.size, player.size, player.size);
-    ctx.fillStyle = '#000';
-    ctx.font = `${player.size}px Arial`;
-    ctx.fillText('😀', player.x + 5, player.y - 8);
+    // Remove offscreen obstacles
+    obstacles = obstacles.filter(obs => obs.x + obs.width > 0);
+}
+
+function draw() {
+    // Clear
+    ctx.fillStyle = '#1e272e';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Draw practice mode text
-    if (practiceMode && gameRunning) {
-        ctx.fillStyle = 'rgba(0,255,0,0.7)';
-        ctx.fillRect(0, 0, 200, 40);
-        ctx.fillStyle = '#0f0';
-        ctx.font = 'bold 16px monospace';
-        ctx.fillText('PRACTICE MODE', 10, 30);
+    // Ground
+    ctx.fillStyle = '#4a4a4a';
+    ctx.fillRect(0, canvas.height - 20, canvas.width, 5);
+    ctx.fillStyle = '#2d2d2d';
+    ctx.fillRect(0, canvas.height - 15, canvas.width, 15);
+    
+    // Obstacles
+    for (let obs of obstacles) {
+        if (obs.type === 'spike') {
+            ctx.fillStyle = '#ff4444';
+            ctx.beginPath();
+            ctx.moveTo(obs.x, obs.y);
+            ctx.lineTo(obs.x + obs.width / 2, obs.y - obs.height);
+            ctx.lineTo(obs.x + obs.width, obs.y);
+            ctx.fill();
+        } else {
+            ctx.fillStyle = '#0fbcf9';
+            ctx.fillRect(obs.x, obs.y - obs.height, obs.width, obs.height);
+        }
     }
     
-    // Draw start instructions if game not running
-    if (!gameRunning && document.getElementById('menuOverlay').classList.contains('hidden') === false) {
-        ctx.fillStyle = 'rgba(0,0,0,0.8)';
-        ctx.fillRect(0, 0, 1000, 600);
-        ctx.fillStyle = '#ffd700';
-        ctx.font = 'bold 36px monospace';
-        ctx.textAlign = 'center';
-        ctx.fillText('PRESS SPACE OR CLICK', 500, 300);
-        ctx.font = '24px monospace';
-        ctx.fillText('TO START', 500, 360);
-        ctx.textAlign = 'left';
+    // Player
+    ctx.fillStyle = LEVELS[currentLevel].color;
+    ctx.fillRect(player.x, player.y, player.width, player.height);
+    ctx.fillStyle = '#fff';
+    ctx.font = '20px Arial';
+    ctx.fillText('>', player.x + 12, player.y + 25);
+    
+    // Practice mode indicator
+    if (practiceMode && gameRunning) {
+        ctx.fillStyle = 'rgba(0,255,0,0.3)';
+        ctx.fillRect(0, 0, 150, 30);
+        ctx.fillStyle = '#0f0';
+        ctx.font = 'bold 14px monospace';
+        ctx.fillText('PRACTICE MODE', 10, 22);
     }
 }
 
-// Game loop
 function gameLoop() {
     updateGame();
     draw();
     animationId = requestAnimationFrame(gameLoop);
 }
 
-// Show stats
+function startGame(practice) {
+    practiceMode = practice;
+    gameRunning = true;
+    gameOverFlag = false;
+    winFlag = false;
+    resetGame();
+    document.getElementById('menuOverlay').classList.add('hidden');
+    document.getElementById('gameOverlay').classList.add('hidden');
+    document.getElementById('winOverlay').classList.add('hidden');
+}
+
 function showStats() {
     document.getElementById('menuOverlay').classList.add('hidden');
     const statsDiv = document.getElementById('statsContent');
-    
-    let completedHtml = '';
-    for (let id of playerStats.completedLevels) {
-        completedHtml += `${LEVELS[id].name}, `;
-    }
-    
     statsDiv.innerHTML = `
         <p>⭐ Stars: ${playerStats.stars}</p>
         <p>💎 Diamonds: ${playerStats.diamonds}</p>
         <p>🪙 Coins: ${playerStats.coins}</p>
         <p>💀 Deaths: ${deaths}</p>
         <p>🎮 Attempts: ${attempts}</p>
-        <p>✅ Completed: ${completedHtml || 'None'}</p>
-        <hr>
-        <p>🏆 Best Percentages:</p>
+        <p>✅ Completed: ${playerStats.completed.map(l => LEVELS[l].name).join(', ') || 'None'}</p>
     `;
-    
-    for (let [id, pct] of Object.entries(playerStats.bestPercent)) {
-        if (LEVELS[id]) {
-            const p = document.createElement('p');
-            p.textContent = `${LEVELS[id].name}: ${pct}%`;
-            statsDiv.appendChild(p);
-        }
-    }
-    
     document.getElementById('statsOverlay').classList.remove('hidden');
 }
 
-// Reset all progress
 function resetProgress() {
-    if (confirm('ARE YOU SURE? This will delete ALL progress!')) {
-        playerStats = { stars: 0, diamonds: 0, coins: 0, completedLevels: [], bestPercent: {} };
+    if (confirm('Delete ALL progress?')) {
+        playerStats = { stars: 0, diamonds: 100, coins: 0, completed: [] };
         deaths = 0;
         attempts = 0;
-        saveGameData();
-        updateDisplay();
-        renderLevelButtons();
+        saveGame();
+        updateUI();
+        updateLevelButtons();
         alert('Progress reset!');
     }
 }
 
-// Initialize everything
-function init() {
-    console.log('Game initializing...');
-    loadGameData();
-    renderLevelButtons();
-    
-    // Set current level display
-    document.getElementById('songInfo').innerHTML = `🎵 ${LEVELS[1].name}`;
-    
-    // Button events
-    document.getElementById('playBtn').onclick = () => startGame(false);
-    document.getElementById('practiceBtn').onclick = () => startGame(true);
-    document.getElementById('resetBtn').onclick = resetProgress;
-    document.getElementById('statsBtn').onclick = showStats;
-    document.getElementById('continueBtn').onclick = () => {
-        document.getElementById('completeOverlay').classList.add('hidden');
-        document.getElementById('menuOverlay').classList.remove('hidden');
-    };
-    document.getElementById('closeStatsBtn').onclick = () => {
-        document.getElementById('statsOverlay').classList.add('hidden');
-        document.getElementById('menuOverlay').classList.remove('hidden');
-    };
-    
-    // Keyboard controls
-    document.addEventListener('keydown', (e) => {
-        if (e.code === 'Space' || e.code === 'ArrowUp') {
-            e.preventDefault();
-            if (gameRunning) {
-                jump();
-            } else if (!gameRunning && document.getElementById('menuOverlay').classList.contains('hidden') === false) {
-                startGame(false);
-            }
-        }
-    });
-    
-    // Click on canvas to jump/start
-    canvas.addEventListener('click', () => {
-        if (gameRunning) {
-            jump();
-        } else if (!gameRunning && document.getElementById('menuOverlay').classList.contains('hidden') === false) {
-            startGame(false);
-        }
-    });
-    
-    // Start the game loop
-    gameLoop();
-    
-    console.log('Game ready! Press START or press SPACE');
+// Auth functions
+async function login() {
+    if (!supabase) { alert('Supabase not configured'); return; }
+    const email = document.getElementById('authEmail').value;
+    const password = document.getElementById('authPassword').value;
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) { alert('Login failed: ' + error.message); return; }
+    currentUser = data.user;
+    alert('Logged in!');
+    document.getElementById('authOverlay').classList.add('hidden');
+    document.getElementById('authBtn').innerText = 'LOGOUT';
 }
 
-// Make sure CONFIG and LEVELS are loaded
-if (typeof CONFIG === 'undefined') {
-    console.error('config.js not loaded!');
-}
-if (typeof LEVELS === 'undefined') {
-    console.error('levels.js not loaded!');
+async function register() {
+    if (!supabase) { alert('Supabase not configured'); return; }
+    const email = document.getElementById('authEmail').value;
+    const password = document.getElementById('authPassword').value;
+    const username = document.getElementById('authUsername').value;
+    const { data, error } = await supabase.auth.signUp({ 
+        email, password, 
+        options: { data: { username } }
+    });
+    if (error) { alert('Register failed: ' + error.message); return; }
+    alert('Registered! Check email for confirmation.');
 }
 
-// Start when page loads
-window.addEventListener('load', init);
+async function logout() {
+    await supabase.auth.signOut();
+    currentUser = null;
+    document.getElementById('authBtn').innerText = 'LOGIN';
+    alert('Logged out');
+}
+
+// Event listeners
+document.getElementById('playBtn').onclick = () => startGame(false);
+document.getElementById('practiceBtn').onclick = () => startGame(true);
+document.getElementById('statsBtn').onclick = showStats;
+document.getElementById('resetBtn').onclick = resetProgress;
+document.getElementById('retryBtn').onclick = () => startGame(practiceMode);
+document.getElementById('menuBtn').onclick = () => {
+    document.getElementById('gameOverlay').classList.add('hidden');
+    document.getElementById('menuOverlay').classList.remove('hidden');
+};
+document.getElementById('nextBtn').onclick = () => {
+    document.getElementById('winOverlay').classList.add('hidden');
+    document.getElementById('menuOverlay').classList.remove('hidden');
+};
+document.getElementById('closeStatsBtn').onclick = () => {
+    document.getElementById('statsOverlay').classList.add('hidden');
+    document.getElementById('menuOverlay').classList.remove('hidden');
+};
+document.getElementById('authBtn').onclick = () => {
+    if (currentUser) logout();
+    else document.getElementById('authOverlay').classList.remove('hidden');
+};
+document.getElementById('doLogin').onclick = login;
+document.getElementById('doRegister').onclick = register;
+document.getElementById('closeAuthBtn').onclick = () => {
+    document.getElementById('authOverlay').classList.add('hidden');
+};
+
+document.querySelectorAll('.level-btn').forEach(btn => {
+    btn.onclick = () => selectLevel(parseInt(btn.dataset.level));
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' || e.code === 'ArrowUp') {
+        e.preventDefault();
+        jump();
+    }
+});
+
+canvas.addEventListener('click', jump);
+
+// Initialize
+loadGame();
+gameLoop();
