@@ -50,18 +50,20 @@ canvas {
     pointer-events: auto;
     font-weight: bold;
     z-index: 10;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
 .stat {
     color: white;
-    font-size: 20px;
+    font-size: 18px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 5px;
 }
 
 .stat span:first-child {
-    font-size: 24px;
+    font-size: 22px;
 }
 
 #levelSelect {
@@ -137,10 +139,9 @@ canvas {
     min-width: 350px;
 }
 
-.overlay-content h1 {
+.overlay-content h1, .overlay-content h2 {
     color: #ffd700;
     margin-bottom: 20px;
-    font-size: 32px;
 }
 
 .overlay-content button {
@@ -192,21 +193,21 @@ canvas {
     transition: width 0.1s linear;
 }
 
-.attempts-counter, .deaths-counter {
+.counters {
     position: absolute;
     bottom: 10px;
     right: 10px;
+    display: flex;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.counter {
     color: white;
     background: rgba(0,0,0,0.7);
     padding: 5px 10px;
     border-radius: 5px;
     font-size: 12px;
-    pointer-events: none;
-}
-
-.deaths-counter {
-    right: auto;
-    left: 10px;
 }
 
 .death-flash {
@@ -237,6 +238,67 @@ canvas {
     border-radius: 5px;
 }
 
+.auth-button {
+    background: #ffd700;
+    color: #333;
+    border: none;
+    padding: 5px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.auth-tabs {
+    margin-bottom: 20px;
+}
+
+.auth-tab {
+    background: rgba(0,0,0,0.5);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    margin: 0 5px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.auth-tab.active {
+    background: #ffd700;
+    color: #333;
+}
+
+.auth-input {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.auth-submit {
+    background: #ffd700;
+    color: #333;
+    border: none;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    width: 100%;
+}
+
+.close-btn {
+    background: #666;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    margin-top: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
 #statsContent {
     color: white;
     text-align: left;
@@ -244,9 +306,10 @@ canvas {
     padding: 10px;
     background: rgba(0,0,0,0.5);
     border-radius: 10px;
+    max-height: 300px;
+    overflow-y: auto;
 }
 
 #statsContent p {
     margin: 10px 0;
-    font-size: 16px;
 }
