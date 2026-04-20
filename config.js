@@ -1,31 +1,16 @@
-// ============================================
-// SUPABASE CONFIGURATION - YOUR ACTUAL KEYS
-// ============================================
-
+// Supabase keys
 const SUPABASE_URL = 'https://miifjguqweghtbixabkr.supabase.co'
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1paWZqZ3Vxd2VnaHRiaXhhYmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3MDI4MzUsImV4cCI6MjA5MjI3ODgzNX0.k5dhmqpBXUhaGBDSRxFi7H50Kthyoo0mjgiRnzhQsCw'
 
-const CONFIG = {
-    GRAVITY: 0.5,
-    JUMP_FORCE: -10,
-    GROUND_Y: 500,
-    PLAYER_SIZE: 35,
-    SCROLL_SPEED: 5,
-    
-    SONGS: {
-        'Stereo Madness': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-        'Back On Track': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
-        'Polargeist': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
-        'Dry Out': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
-        'Electrodynamix': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3'
-    }
+// Level data
+const LEVELS = {
+    1: { name: 'Stereo Madness', stars: 3, length: 1000, speed: 5, required: 0, color: '#ff3f34' },
+    2: { name: 'Back On Track', stars: 3, length: 1100, speed: 5.5, required: 3, color: '#ffa502' },
+    3: { name: 'Polargeist', stars: 4, length: 1200, speed: 6, required: 6, color: '#0fbcf9' },
+    4: { name: 'Dry Out', stars: 4, length: 1300, speed: 6.5, required: 10, color: '#05c46b' },
+    5: { name: 'Electrodynamix', stars: 5, length: 1400, speed: 7, required: 14, color: '#ff3838' }
 };
 
-// Initialize Supabase client
-let supabaseClient = null;
-let currentUser = null;
-
-if (typeof supabase !== 'undefined') {
-    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    console.log('Supabase initialized');
-}
+// Game settings
+const GRAVITY = 0.6;
+const JUMP_POWER = -10;
