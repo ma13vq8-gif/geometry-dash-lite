@@ -5,86 +5,66 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Geometry Dash Lite</title>
     <link rel="stylesheet" href="styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <div id="gameContainer">
-        <canvas id="gameCanvas"></canvas>
+        <canvas id="gameCanvas" width="1000" height="600"></canvas>
         
         <div id="ui">
-            <div id="topBar">
-                <div class="stat">
-                    <span class="icon">⭐</span>
-                    <span id="stars">0</span>
-                </div>
-                <div class="stat">
-                    <span class="icon">💎</span>
-                    <span id="diamonds">0</span>
-                </div>
-                <div class="stat">
-                    <span class="icon">🪙</span>
-                    <span id="coins">0</span>
-                </div>
-                <div class="stat">
-                    <span class="icon">🎵</span>
-                    <span id="songName">Electrodynamix</span>
+            <div class="stats-bar">
+                <div class="stat"><span>⭐</span> <span id="starCount">0</span></div>
+                <div class="stat"><span>💎</span> <span id="diamondCount">0</span></div>
+                <div class="stat"><span>🪙</span> <span id="coinCount">0</span></div>
+                <div class="stat" id="songInfo">🎵 Stereo Madness</div>
+            </div>
+            
+            <div id="levelSelect">
+                <h3>SELECT LEVEL</h3>
+                <div class="level-grid" id="levelGrid"></div>
+            </div>
+            
+            <div class="game-ui">
+                <div id="percentage">0%</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
                 </div>
             </div>
             
-            <div id="levelSelector">
-                <h2>SELECT LEVEL</h2>
-                <div class="levelList" id="levelList"></div>
+            <div class="attempts-counter">Attempts: <span id="attemptNum">0</span></div>
+            <div class="deaths-counter">Deaths: <span id="deathNum">0</span></div>
+        </div>
+        
+        <div id="menuOverlay" class="overlay">
+            <div class="overlay-content">
+                <h1>⚡ GEOMETRY DASH LITE ⚡</h1>
+                <button id="playBtn">▶ START GAME</button>
+                <button id="practiceBtn">🔄 PRACTICE MODE</button>
+                <button id="statsBtn">📊 STATISTICS</button>
+                <button id="resetBtn">🗑️ RESET PROGRESS</button>
             </div>
-            
-            <div id="gameUI">
-                <div id="percent">0%</div>
-                <div id="progressBar"><div id="progressFill"></div></div>
-                <div id="attempts">Attempts: <span id="attemptCount">0</span></div>
+        </div>
+        
+        <div id="completeOverlay" class="overlay hidden">
+            <div class="overlay-content">
+                <h1>🎉 LEVEL COMPLETE! 🎉</h1>
+                <p id="rewardText"></p>
+                <button id="continueBtn">CONTINUE</button>
             </div>
-            
-            <div id="menuOverlay" class="hidden">
-                <div id="menuContent">
-                    <h1>GEOMETRY DASH LITE</h1>
-                    <button id="playBtn">▶ PLAY</button>
-                    <button id="practiceBtn">⚙ PRACTICE MODE</button>
-                    <button id="storeBtn">🛒 STORE</button>
-                    <button id="statsBtn">📊 STATS</button>
-                    <button id="loginBtn">🔐 LOGIN</button>
-                </div>
+        </div>
+        
+        <div id="statsOverlay" class="overlay hidden">
+            <div class="overlay-content">
+                <h1>📊 PLAYER STATISTICS</h1>
+                <div id="statsContent"></div>
+                <button id="closeStatsBtn">CLOSE</button>
             </div>
-            
-            <div id="storeOverlay" class="hidden">
-                <div class="storeContent">
-                    <h2>ICON STORE</h2>
-                    <div class="shopItems" id="shopItems"></div>
-                    <button class="closeBtn">CLOSE</button>
-                </div>
-            </div>
-            
-            <div id="statsOverlay" class="hidden">
-                <div class="statsContent">
-                    <h2>PLAYER STATS</h2>
-                    <div id="playerStats"></div>
-                    <button class="closeBtn">CLOSE</button>
-                </div>
-            </div>
-            
-            <div id="loginOverlay" class="hidden">
-                <div class="loginContent">
-                    <h2>LOGIN / REGISTER</h2>
-                    <input type="text" id="username" placeholder="Username">
-                    <input type="password" id="password" placeholder="Password">
-                    <button id="doLogin">LOGIN</button>
-                    <button id="doRegister">REGISTER</button>
-                    <button class="closeBtn">CLOSE</button>
-                </div>
-            </div>
-            
-            <div id="deathEffect" class="hidden"></div>
         </div>
     </div>
-    
+
     <script src="config.js"></script>
+    <script src="levels.js"></script>
+    <script src="audio.js"></script>
+    <script src="utils.js"></script>
     <script src="game.js"></script>
 </body>
 </html>
