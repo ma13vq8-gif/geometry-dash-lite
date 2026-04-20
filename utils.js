@@ -30,12 +30,6 @@ function loadGameData() {
     };
 }
 
-function formatTime(seconds) {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-}
-
 function showDeathFlash() {
     const flash = document.createElement('div');
     flash.className = 'death-flash';
@@ -53,6 +47,7 @@ function updateStatsDisplay(stats, deaths, attempts) {
 
 function renderLevelButtons(stats) {
     const grid = document.getElementById('levelGrid');
+    if (!grid) return;
     grid.innerHTML = '';
     
     for (let i = 1; i <= 5; i++) {
@@ -76,7 +71,7 @@ function renderLevelButtons(stats) {
 }
 
 function selectLevel(levelId) {
-    currentLevel = levelId;
+    window.currentLevel = levelId;
     document.getElementById('songInfo').innerHTML = `🎵 ${LEVELS[levelId].name}`;
 }
 
@@ -85,7 +80,6 @@ function calculateRewards(levelId, deaths) {
     let stars = level.stars;
     let diamonds = level.stars * 10;
     
-    // Penalty for deaths
     if (deaths > 10) {
         stars = Math.max(1, stars - 2);
         diamonds = Math.max(10, diamonds - 20);
