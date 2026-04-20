@@ -16,6 +16,7 @@
                 <div class="stat"><span>💎</span> <span id="diamondCount">0</span></div>
                 <div class="stat"><span>🪙</span> <span id="coinCount">0</span></div>
                 <div class="stat" id="songInfo">🎵 Stereo Madness</div>
+                <div class="stat"><span>🔐</span> <button id="authBtn" class="auth-button">LOGIN</button></div>
             </div>
             
             <div id="levelSelect">
@@ -30,8 +31,10 @@
                 </div>
             </div>
             
-            <div class="attempts-counter">Attempts: <span id="attemptNum">0</span></div>
-            <div class="deaths-counter">Deaths: <span id="deathNum">0</span></div>
+            <div class="counters">
+                <div class="counter">Attempts: <span id="attemptNum">0</span></div>
+                <div class="counter">Deaths: <span id="deathNum">0</span></div>
+            </div>
         </div>
         
         <div id="menuOverlay" class="overlay">
@@ -54,17 +57,44 @@
         
         <div id="statsOverlay" class="overlay hidden">
             <div class="overlay-content">
-                <h1>📊 PLAYER STATISTICS</h1>
+                <h1>📊 STATISTICS</h1>
                 <div id="statsContent"></div>
-                <button id="closeStatsBtn">CLOSE</button>
+                <button id="closeStatsBtn" class="close-btn">CLOSE</button>
+            </div>
+        </div>
+        
+        <div id="authModal" class="overlay hidden">
+            <div class="overlay-content">
+                <h2>🔐 ACCOUNT</h2>
+                <div class="auth-tabs">
+                    <button id="loginTabBtn" class="auth-tab active">LOGIN</button>
+                    <button id="registerTabBtn" class="auth-tab">REGISTER</button>
+                </div>
+                
+                <div id="loginForm">
+                    <input type="email" id="loginEmail" placeholder="Email" class="auth-input">
+                    <input type="password" id="loginPassword" placeholder="Password" class="auth-input">
+                    <button id="doLoginBtn" class="auth-submit">LOGIN</button>
+                </div>
+                
+                <div id="registerForm" class="hidden">
+                    <input type="text" id="regUsername" placeholder="Username" class="auth-input">
+                    <input type="email" id="regEmail" placeholder="Email" class="auth-input">
+                    <input type="password" id="regPassword" placeholder="Password" class="auth-input">
+                    <button id="doRegisterBtn" class="auth-submit">REGISTER</button>
+                </div>
+                
+                <button id="closeAuthBtn" class="close-btn">CANCEL</button>
             </div>
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
     <script src="levels.js"></script>
     <script src="audio.js"></script>
     <script src="utils.js"></script>
+    <script src="auth.js"></script>
     <script src="game.js"></script>
 </body>
 </html>
