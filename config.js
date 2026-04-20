@@ -3,7 +3,7 @@
 // ============================================
 
 const SUPABASE_URL = 'https://miifjguqweghtbixabkr.supabase.co'
-const SUPABASE_ANON_KEY = 'const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1paWZqZ3Vxd2VnaHRiaXhhYmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3MDI4MzUsImV4cCI6MjA5MjI3ODgzNX0.k5dhmqpBXUhaGBDSRxFi7H50Kthyoo0mjgiRnzhQsCw'  // REPLACE WITH YOUR REGENERATED KEY!'  // REPLACE WITH YOUR REGENERATED KEY!
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1paWZqZ3Vxd2VnaHRiaXhhYmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3MDI4MzUsImV4cCI6MjA5MjI3ODgzNX0.k5dhmqpBXUhaGBDSRxFi7H50Kthyoo0mjgiRnzhQsCw'
 
 const CONFIG = {
     GRAVITY: 0.5,
@@ -20,3 +20,12 @@ const CONFIG = {
         'Electrodynamix': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3'
     }
 };
+
+// Initialize Supabase client
+let supabaseClient = null;
+let currentUser = null;
+
+if (typeof supabase !== 'undefined') {
+    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    console.log('Supabase initialized');
+}
