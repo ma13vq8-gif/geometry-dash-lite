@@ -33,24 +33,54 @@ function toggleMute() {
 
 function playJumpSound() {
     if (!isMuted) {
-        const jumpSound = new Audio('data:audio/wav;base64,U3RlYWx0aCBzb3VuZCBnZW5lcmF0ZWQ=');
-        jumpSound.volume = 0.3;
-        jumpSound.play().catch(e => console.log('Sound play failed'));
+        try {
+            const jumpSound = new Audio();
+            jumpSound.volume = 0.3;
+            // Web Audio API for simple beep
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.frequency.value = 880;
+            gainNode.gain.value = 0.1;
+            oscillator.start();
+            gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.3);
+            oscillator.stop(audioCtx.currentTime + 0.3);
+        } catch(e) { console.log('Sound error'); }
     }
 }
 
 function playDeathSound() {
     if (!isMuted) {
-        const deathSound = new Audio('data:audio/wav;base64,U3RlYWx0aCBzb3VuZCBnZW5lcmF0ZWQ=');
-        deathSound.volume = 0.4;
-        deathSound.play().catch(e => console.log('Sound play failed'));
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.frequency.value = 220;
+            gainNode.gain.value = 0.15;
+            oscillator.start();
+            gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.5);
+            oscillator.stop(audioCtx.currentTime + 0.5);
+        } catch(e) { console.log('Sound error'); }
     }
 }
 
 function playCompleteSound() {
     if (!isMuted) {
-        const completeSound = new Audio('data:audio/wav;base64,U3RlYWx0aCBzb3VuZCBnZW5lcmF0ZWQ=');
-        completeSound.volume = 0.6;
-        completeSound.play().catch(e => console.log('Sound play failed'));
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.frequency.value = 1046.50;
+            gainNode.gain.value = 0.2;
+            oscillator.start();
+            gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.8);
+            oscillator.stop(audioCtx.currentTime + 0.8);
+        } catch(e) { console.log('Sound error'); }
     }
 }
