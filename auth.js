@@ -1,11 +1,7 @@
-// ============================================
-// SUPABASE AUTHENTICATION
-// ============================================
-
+// Supabase Authentication
 let supabaseClient = null;
 let currentUser = null;
 
-// Initialize Supabase
 function initSupabase() {
     if (typeof supabase !== 'undefined' && SUPABASE_URL && SUPABASE_ANON_KEY) {
         supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -16,7 +12,6 @@ function initSupabase() {
     }
 }
 
-// Check if user is logged in
 async function checkAuth() {
     if (!supabaseClient) return;
     
@@ -25,25 +20,29 @@ async function checkAuth() {
     if (session) {
         currentUser = session.user;
         await loadOnlineData();
-        document.getElementById('authBtn').textContent = '👤 LOGOUT';
-        document.getElementById('authBtn').onclick = logout;
+        const authBtn = document.getElementById('authBtn');
+        if (authBtn) {
+            authBtn.textContent = '👤 LOGOUT';
+            authBtn.onclick = logout;
+        }
     } else {
         currentUser = null;
-        document.getElementById('authBtn').textContent = '🔐 LOGIN';
-        document.getElementById('authBtn').onclick = showAuthModal;
+        const authBtn = document.getElementById('authBtn');
+        if (authBtn) {
+            authBtn.textContent = '🔐 LOGIN';
+            authBtn.onclick = showAuthModal;
+        }
     }
 }
 
-// Show login/register modal
 function showAuthModal() {
     const modal = document.getElementById('authModal');
-    modal.classList.remove('hidden');
+    if (modal) modal.classList.remove('hidden');
 }
 
-// Login
 async function login(email, password) {
     if (!supabaseClient) {
-        alert('Supabase not configured. Add your URL and anon key to config.js');
+        alert('Supabase not configured');
         return false;
     }
     
@@ -64,10 +63,9 @@ async function login(email, password) {
     return true;
 }
 
-// Register
 async function register(email, password, username) {
     if (!supabaseClient) {
-        alert('Supabase not configured. Add your URL and anon key to config.js');
+        alert('Supabase not configured');
         return false;
     }
     
@@ -75,9 +73,7 @@ async function register(email, password, username) {
         email: email,
         password: password,
         options: {
-            data: {
-                username: username
-            }
+            data: { username: username }
         }
     });
     
@@ -86,52 +82,52 @@ async function register(email, password, username) {
         return false;
     }
     
-    alert('Registered! Please check your email to confirm (or login if auto-confirmed)');
+    alert('Registered! Please check your email to confirm.');
     return true;
 }
 
-// Logout
 async function logout() {
     if (!supabaseClient) return;
     
     await supabaseClient.auth.signOut();
     currentUser = null;
     
-    // Reload local data
-    loadGameData();
-    updateStatsDisplay(playerStats, deaths, attempts);
-    renderLevelButtons(playerStats);
+    const saved = loadGameData();
+    window.playerStats = saved.stats;
+    window.deaths = saved.deaths;
+    window.attempts = saved.attempts;
+    updateStatsDisplay(window.playerStats, window.deaths, window.attempts);
+    renderLevelButtons(window.playerStats);
     
-    document.getElementById('authBtn').textContent = '🔐 LOGIN';
-    document.getElementById('authBtn').onclick = showAuthModal;
+    const authBtn = document.getElementById('authBtn');
+    if (authBtn) {
+        authBtn.textContent = '🔐 LOGIN';
+        authBtn.onclick = showAuthModal;
+    }
     alert('Logged out');
 }
 
-// Load player data from Supabase
 async function loadOnlineData() {
     if (!supabaseClient || !currentUser) return;
     
-    // Load player stats
-    const { data: stats, error: statsError } = await supabaseClient
+    const { data: stats } = await supabaseClient
         .from('player_stats')
         .select('*')
         .eq('user_id', currentUser.id)
         .single();
     
     if (stats) {
-        playerStats = {
+        window.playerStats = {
             stars: stats.stars || 0,
             diamonds: stats.diamonds || 0,
             coins: stats.secret_coins || 0,
             completedLevels: [],
             bestPercent: {}
         };
-        
-        deaths = stats.total_deaths || 0;
-        attempts = stats.total_attempts || 0;
+        window.deaths = stats.total_deaths || 0;
+        window.attempts = stats.total_attempts || 0;
     }
     
-    // Load level progress
     const { data: progress } = await supabaseClient
         .from('level_progress')
         .select('*')
@@ -139,61 +135,93 @@ async function loadOnlineData() {
     
     if (progress) {
         progress.forEach(p => {
-            if (p.is_completed) {
-                playerStats.completedLevels.push(p.level_id);
-            }
-            playerStats.bestPercent[p.level_id] = p.best_percent || 0;
+            if (p.is_completed) window.playerStats.completedLevels.push(p.level_id);
+            window.playerStats.bestPercent[p.level_id] = p.best_percent || 0;
         });
     }
     
-    // Load unlocks
-    const { data: unlocks } = await supabaseClient
-        .from('player_unlocks')
-        .select('unlockable_id, is_equipped')
-        .eq('user_id', currentUser.id);
-    
-    if (unlocks) {
-        playerStats.unlocks = unlocks;
-    }
-    
-    updateStatsDisplay(playerStats, deaths, attempts);
-    renderLevelButtons(playerStats);
+    updateStatsDisplay(window.playerStats, window.deaths, window.attempts);
+    renderLevelButtons(window.playerStats);
 }
 
-// Save progress to Supabase
 async function saveOnlineProgress() {
     if (!supabaseClient || !currentUser) return;
     
-    // Save stats
     await supabaseClient
         .from('player_stats')
         .upsert({
             user_id: currentUser.id,
-            stars: playerStats.stars,
-            diamonds: playerStats.diamonds,
-            secret_coins: playerStats.coins,
-            total_deaths: deaths,
-            total_attempts: attempts,
-            total_jumps: playerStats.totalJumps || 0
+            stars: window.playerStats.stars,
+            diamonds: window.playerStats.diamonds,
+            secret_coins: window.playerStats.coins,
+            total_deaths: window.deaths,
+            total_attempts: window.attempts
         });
     
-    // Save level progress for each completed level
-    for (let levelId of playerStats.completedLevels) {
+    for (let levelId of window.playerStats.completedLevels) {
         await supabaseClient
             .from('level_progress')
             .upsert({
                 user_id: currentUser.id,
                 level_id: levelId,
                 is_completed: true,
-                best_percent: playerStats.bestPercent[levelId] || 100,
-                attempts: attempts,
-                deaths: deaths,
+                best_percent: window.playerStats.bestPercent[levelId] || 100,
                 completed_at: new Date()
             });
     }
 }
 
-// Close auth modal
 function closeAuthModal() {
-    document.getElementById('authModal').classList.add('hidden');
+    const modal = document.getElementById('authModal');
+    if (modal) modal.classList.add('hidden');
 }
+
+// Setup auth event listeners
+document.addEventListener('DOMContentLoaded', () => {
+    const loginTab = document.getElementById('loginTabBtn');
+    const registerTab = document.getElementById('registerTabBtn');
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    const doLogin = document.getElementById('doLoginBtn');
+    const doRegister = document.getElementById('doRegisterBtn');
+    const closeAuth = document.getElementById('closeAuthBtn');
+    
+    if (loginTab) {
+        loginTab.onclick = () => {
+            loginTab.classList.add('active');
+            registerTab.classList.remove('active');
+            loginForm.classList.remove('hidden');
+            registerForm.classList.add('hidden');
+        };
+    }
+    
+    if (registerTab) {
+        registerTab.onclick = () => {
+            registerTab.classList.add('active');
+            loginTab.classList.remove('active');
+            registerForm.classList.remove('hidden');
+            loginForm.classList.add('hidden');
+        };
+    }
+    
+    if (doLogin) {
+        doLogin.onclick = () => {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            if (email && password) login(email, password);
+            else alert('Enter email and password');
+        };
+    }
+    
+    if (doRegister) {
+        doRegister.onclick = () => {
+            const username = document.getElementById('regUsername').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+            if (username && email && password) register(email, password, username);
+            else alert('Fill all fields');
+        };
+    }
+    
+    if (closeAuth) closeAuth.onclick = closeAuthModal;
+});
