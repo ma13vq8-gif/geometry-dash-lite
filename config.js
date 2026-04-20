@@ -1,10 +1,10 @@
 // ============================================
-// SUPABASE CONFIGURATION - REPLACE WITH YOURS!
+// SUPABASE CONFIGURATION - YOUR ACTUAL KEYS
 // ============================================
-const SUPABASE_URL = 'https://xxxxxxxxx.supabase.co'  // REPLACE THIS
-const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY_HERE'  // REPLACE THIS
 
-// Game Configuration
+const SUPABASE_URL = 'https://miifjguqweghtbixabkr.supabase.co'
+const SUPABASE_ANON_KEY = 'YOUR_NEW_ANON_KEY_HERE'  // REPLACE WITH YOUR REGENERATED KEY!
+
 const CONFIG = {
     GRAVITY: 0.5,
     JUMP_FORCE: -10,
@@ -12,7 +12,6 @@ const CONFIG = {
     PLAYER_SIZE: 35,
     SCROLL_SPEED: 5,
     
-    // Song URLs
     SONGS: {
         'Stereo Madness': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
         'Back On Track': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
