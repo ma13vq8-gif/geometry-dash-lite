@@ -5,96 +5,78 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Geometry Dash Lite</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <div id="gameContainer">
-        <canvas id="gameCanvas" width="1000" height="600"></canvas>
+        <canvas id="gameCanvas" width="1000" height="500"></canvas>
         
-        <div id="ui">
-            <div class="stats-bar">
-                <div class="stat"><span>⭐</span> <span id="starCount">0</span></div>
-                <div class="stat"><span>💎</span> <span id="diamondCount">0</span></div>
-                <div class="stat"><span>🪙</span> <span id="coinCount">0</span></div>
-                <div class="stat" id="songInfo">🎵 Stereo Madness</div>
-                <div class="stat"><span>🔐</span> <button id="authBtn" class="auth-button">LOGIN</button></div>
-            </div>
-            
-            <div id="levelSelect">
-                <h3>SELECT LEVEL</h3>
-                <div class="level-grid" id="levelGrid"></div>
-            </div>
-            
-            <div class="game-ui">
-                <div id="percentage">0%</div>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progressFill"></div>
-                </div>
-            </div>
-            
-            <div class="counters">
-                <div class="counter">Attempts: <span id="attemptNum">0</span></div>
-                <div class="counter">Deaths: <span id="deathNum">0</span></div>
-            </div>
+        <div id="topBar">
+            <div class="stat">⭐ <span id="stars">0</span></div>
+            <div class="stat">💎 <span id="diamonds">0</span></div>
+            <div class="stat">🪙 <span id="coins">0</span></div>
+            <div class="stat">🎵 <span id="levelName">Stereo Madness</span></div>
+            <button id="authBtn">LOGIN</button>
         </div>
+        
+        <div id="levelSelect">
+            <button class="level-btn" data-level="1">1. Stereo Madness ⭐3</button>
+            <button class="level-btn" data-level="2">2. Back On Track ⭐3</button>
+            <button class="level-btn" data-level="3">3. Polargeist ⭐4</button>
+            <button class="level-btn" data-level="4">4. Dry Out ⭐4</button>
+            <button class="level-btn" data-level="5">5. Electrodynamix ⭐5</button>
+        </div>
+        
+        <div id="percentage">0%</div>
         
         <div id="menuOverlay" class="overlay">
             <div class="overlay-content">
-                <h1>⚡ GEOMETRY DASH LITE ⚡</h1>
-                <button id="playBtn">▶ START GAME</button>
-                <button id="practiceBtn">🔄 PRACTICE MODE</button>
-                <button id="statsBtn">📊 STATISTICS</button>
-                <button id="resetBtn">🗑️ RESET PROGRESS</button>
+                <h1>⚡ GEOMETRY DASH ⚡</h1>
+                <button id="playBtn">PLAY</button>
+                <button id="practiceBtn">PRACTICE</button>
+                <button id="statsBtn">STATS</button>
+                <button id="resetBtn">RESET</button>
             </div>
         </div>
         
-        <div id="completeOverlay" class="overlay hidden">
+        <div id="gameOverlay" class="overlay hidden">
             <div class="overlay-content">
-                <h1>🎉 LEVEL COMPLETE! 🎉</h1>
+                <h1>💀 GAME OVER 💀</h1>
+                <button id="retryBtn">RETRY</button>
+                <button id="menuBtn">MENU</button>
+            </div>
+        </div>
+        
+        <div id="winOverlay" class="overlay hidden">
+            <div class="overlay-content">
+                <h1>🎉 COMPLETE! 🎉</h1>
                 <p id="rewardText"></p>
-                <button id="continueBtn">CONTINUE</button>
+                <button id="nextBtn">CONTINUE</button>
             </div>
         </div>
         
         <div id="statsOverlay" class="overlay hidden">
             <div class="overlay-content">
-                <h1>📊 STATISTICS</h1>
+                <h2>STATISTICS</h2>
                 <div id="statsContent"></div>
-                <button id="closeStatsBtn" class="close-btn">CLOSE</button>
+                <button id="closeStatsBtn">CLOSE</button>
             </div>
         </div>
         
-        <div id="authModal" class="overlay hidden">
+        <div id="authOverlay" class="overlay hidden">
             <div class="overlay-content">
-                <h2>🔐 ACCOUNT</h2>
-                <div class="auth-tabs">
-                    <button id="loginTabBtn" class="auth-tab active">LOGIN</button>
-                    <button id="registerTabBtn" class="auth-tab">REGISTER</button>
-                </div>
-                
-                <div id="loginForm">
-                    <input type="email" id="loginEmail" placeholder="Email" class="auth-input">
-                    <input type="password" id="loginPassword" placeholder="Password" class="auth-input">
-                    <button id="doLoginBtn" class="auth-submit">LOGIN</button>
-                </div>
-                
-                <div id="registerForm" class="hidden">
-                    <input type="text" id="regUsername" placeholder="Username" class="auth-input">
-                    <input type="email" id="regEmail" placeholder="Email" class="auth-input">
-                    <input type="password" id="regPassword" placeholder="Password" class="auth-input">
-                    <button id="doRegisterBtn" class="auth-submit">REGISTER</button>
-                </div>
-                
-                <button id="closeAuthBtn" class="close-btn">CANCEL</button>
+                <h2>ACCOUNT</h2>
+                <input type="email" id="authEmail" placeholder="Email">
+                <input type="password" id="authPassword" placeholder="Password">
+                <input type="text" id="authUsername" placeholder="Username (register only)">
+                <button id="doLogin">LOGIN</button>
+                <button id="doRegister">REGISTER</button>
+                <button id="closeAuthBtn">CANCEL</button>
             </div>
         </div>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <script src="config.js"></script>
-    <script src="levels.js"></script>
-    <script src="audio.js"></script>
-    <script src="utils.js"></script>
-    <script src="auth.js"></script>
     <script src="game.js"></script>
 </body>
 </html>
