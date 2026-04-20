@@ -17,7 +17,6 @@ let animationId = null;
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// Initialize
 function init() {
     const saved = loadGameData();
     playerStats = saved.stats;
@@ -26,7 +25,6 @@ function init() {
     updateStatsDisplay(playerStats, deaths, attempts);
     renderLevelButtons(playerStats);
     
-    // Event listeners
     document.getElementById('playBtn').onclick = () => startGame(false);
     document.getElementById('practiceBtn').onclick = () => startGame(true);
     document.getElementById('resetBtn').onclick = resetProgress;
@@ -40,7 +38,6 @@ function init() {
         document.getElementById('menuOverlay').classList.remove('hidden');
     };
     
-    // Keyboard controls
     document.addEventListener('keydown', (e) => {
         if (e.code === 'Space' || e.code === 'ArrowUp') {
             e.preventDefault();
@@ -52,6 +49,7 @@ function init() {
         if (gameRunning) jump();
     });
     
+    initSupabase();
     draw();
 }
 
@@ -77,7 +75,7 @@ function resetGame() {
     currentObstacles = level.obstacles.map(obs => ({
         x: obs.x,
         type: obs.type,
-        width: obs.type === 'double' ? 60 : 30,
+        width: obs.type === 'double' ? 60 : (obs.type === 'block' ? 40 : 30),
         height: obs.type === 'block' ? 40 : 30,
         y: obs.y || 500
     }));
@@ -97,7 +95,6 @@ function jump() {
 function updateGame() {
     if (!gameRunning) return;
     
-    // Physics
     player.vy += CONFIG.GRAVITY;
     player.y += player.vy;
     
@@ -112,28 +109,23 @@ function updateGame() {
         player.vy = 0;
     }
     
-    // Scroll
     camera += CONFIG.SCROLL_SPEED;
     distance += CONFIG.SCROLL_SPEED;
     
-    // Update percentage
     const level = LEVELS[currentLevel];
     const percent = Math.min(100, Math.floor((distance / level.length) * 100));
     document.getElementById('percentage').textContent = `${percent}%`;
     document.getElementById('progressFill').style.width = `${percent}%`;
     
-    // Update best percent
     if (percent > (playerStats.bestPercent[currentLevel] || 0)) {
         playerStats.bestPercent[currentLevel] = percent;
     }
     
-    // Win condition
     if (distance >= level.length) {
         winGame();
         return;
     }
     
-    // Collision detection
     for (let obs of currentObstacles) {
         const obsX = obs.x - camera;
         if (obsX > -50 && obsX < 150) {
@@ -169,18 +161,15 @@ function winGame() {
     gameRunning = false;
     const level = LEVELS[currentLevel];
     
-    // Check if already completed
     if (!playerStats.completedLevels.includes(currentLevel)) {
         playerStats.completedLevels.push(currentLevel);
-        
         const rewards = calculateRewards(currentLevel, deaths);
         playerStats.stars += rewards.stars;
         playerStats.diamonds += rewards.diamonds;
         
-        document.getElementById('rewardText').innerHTML = `
-            ⭐ +${rewards.stars} Stars!<br>
-            💎 +${rewards.diamonds} Diamonds!
-        `;
+        if (currentUser) saveOnlineProgress();
+        
+        document.getElementById('rewardText').innerHTML = `⭐ +${rewards.stars} Stars!<br>💎 +${rewards.diamonds} Diamonds!`;
     } else {
         document.getElementById('rewardText').innerHTML = `⭐ Level already completed!`;
     }
@@ -222,9 +211,8 @@ function showStats() {
         <p>🪙 Total Coins: ${playerStats.coins}</p>
         <p>💀 Total Deaths: ${deaths}</p>
         <p>🎮 Total Attempts: ${attempts}</p>
-        <p>✅ Completed Levels: ${completedList || 'None'}</p>
-        <hr>
-        <p>🏆 Best Percentages:</p>
+        <p>✅ Completed: ${completedList || 'None'}</p>
+        <hr><p>🏆 Best Percentages:</p>
         ${Object.entries(playerStats.bestPercent).map(([id, pct]) => 
             `<p>${LEVELS[id]?.name}: ${pct}%</p>`
         ).join('')}
@@ -234,15 +222,12 @@ function showStats() {
 }
 
 function draw() {
-    // Clear canvas
     ctx.fillStyle = '#1a1a2e';
     ctx.fillRect(0, 0, 1000, 600);
     
-    // Draw ground
     ctx.fillStyle = '#4a4a4a';
     ctx.fillRect(0, CONFIG.GROUND_Y, 1000, 5);
     
-    // Draw obstacles
     currentObstacles.forEach(obs => {
         const x = obs.x - camera;
         if (x > -100 && x < 1100) {
@@ -265,32 +250,18 @@ function draw() {
         }
     });
     
-    // Draw player
     ctx.fillStyle = '#ffd700';
     ctx.fillRect(player.x, player.y - player.size, player.size, player.size);
     ctx.fillStyle = '#000';
     ctx.font = '30px Arial';
     ctx.fillText('😀', player.x + 5, player.y - 8);
     
-    // Draw practice mode indicator
     if (practiceMode && gameRunning) {
         ctx.fillStyle = 'rgba(0,255,0,0.3)';
         ctx.fillRect(0, 0, 200, 40);
         ctx.fillStyle = '#0f0';
         ctx.font = 'bold 16px monospace';
         ctx.fillText('PRACTICE MODE', 10, 30);
-    }
-    
-    if (!gameRunning && !document.getElementById('menuOverlay').classList.contains('hidden')) {
-        ctx.fillStyle = 'rgba(0,0,0,0.7)';
-        ctx.fillRect(0, 0, 1000, 600);
-        ctx.fillStyle = '#ffd700';
-        ctx.font = 'bold 36px monospace';
-        ctx.textAlign = 'center';
-        ctx.fillText('PRESS SPACE OR CLICK', 500, 300);
-        ctx.font = '20px monospace';
-        ctx.fillText('TO START', 500, 360);
-        ctx.textAlign = 'left';
     }
     
     requestAnimationFrame(draw);
@@ -301,5 +272,12 @@ function gameLoop() {
     animationId = requestAnimationFrame(gameLoop);
 }
 
-// Start the game
+// Make variables global for other scripts
+window.currentLevel = currentLevel;
+window.playerStats = playerStats;
+window.deaths = deaths;
+window.attempts = attempts;
+window.selectLevel = selectLevel;
+window.startGame = startGame;
+
 init();
