@@ -3,7 +3,7 @@
 // ============================================
 
 const SUPABASE_URL = 'https://miifjguqweghtbixabkr.supabase.co'
-const SUPABASE_ANON_KEY = 'YOUR_NEW_ANON_KEY_HERE'  // REPLACE WITH YOUR REGENERATED KEY!
+const SUPABASE_ANON_KEY = 'const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1paWZqZ3Vxd2VnaHRiaXhhYmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3MDI4MzUsImV4cCI6MjA5MjI3ODgzNX0.k5dhmqpBXUhaGBDSRxFi7H50Kthyoo0mjgiRnzhQsCw'  // REPLACE WITH YOUR REGENERATED KEY!'  // REPLACE WITH YOUR REGENERATED KEY!
 
 const CONFIG = {
     GRAVITY: 0.5,
