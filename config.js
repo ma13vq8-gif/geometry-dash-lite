@@ -1,3 +1,9 @@
+// ============================================
+// SUPABASE CONFIGURATION - REPLACE WITH YOURS!
+// ============================================
+const SUPABASE_URL = 'https://xxxxxxxxx.supabase.co'  // REPLACE THIS
+const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY_HERE'  // REPLACE THIS
+
 // Game Configuration
 const CONFIG = {
     GRAVITY: 0.5,
@@ -5,14 +11,13 @@ const CONFIG = {
     GROUND_Y: 500,
     PLAYER_SIZE: 35,
     SCROLL_SPEED: 5,
-    BASE_URL: window.location.origin,
     
-    // Song URLs (replace with actual file paths)
+    // Song URLs
     SONGS: {
-        'Stereo Madness': 'assets/songs/stereo-madness.mp3',
-        'Back On Track': 'assets/songs/back-on-track.mp3',
-        'Polargeist': 'assets/songs/polargeist.mp3',
-        'Dry Out': 'assets/songs/dry-out.mp3',
-        'Electrodynamix': 'assets/songs/electrodynamix.mp3'
+        'Stereo Madness': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+        'Back On Track': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+        'Polargeist': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
+        'Dry Out': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
+        'Electrodynamix': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3'
     }
 };
